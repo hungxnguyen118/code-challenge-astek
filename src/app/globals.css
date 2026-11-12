@@ -1,0 +1,23 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Code", Menlo, monospace;
+}
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  background: #f6f7f9;
+  color: #111827;
+}
+
+/* Confidence colouring for table cells */
+.conf-medium {
+  background: #fef9c3;
+}
+.conf-low {
+  background: #fed7aa;
+}
