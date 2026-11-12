@@ -17,17 +17,23 @@ Upload any spreadsheet listing laptops, desktops and servers — whatever its la
 
 ```bash
 npm install
-npm run dev          # http://localhost:3000
+npm run dev          # http://localhost:3001
 npm test             # 160 unit, end-to-end and robustness tests
 npm run fixtures     # regenerate the messy test spreadsheets
 npx tsx scripts/inspect.ts path/to/file.xlsx   # print what the parser makes of any file
 ```
 
-Requires Node 20+. Tip: `http://localhost:3000/?sample=assets_FINAL_v3_USE_THIS_ONE.xlsx` opens a sample directly.
+Requires Node 20+. Both `npm run dev` and `npm run start` explicitly use **port 3001**. Port **3000 is reserved for another server**; do not use it or stop its process. For production mode, run `npm run build` followed by `npm run start`.
+
+Tip: `http://localhost:3001/?sample=assets_FINAL_v3_USE_THIS_ONE.xlsx` opens a sample directly.
 
 ---
 
 ## How it works
+
+### Agent instructions and quality requirements
+
+Coding agents must read [AGENTS.md](AGENTS.md). [CLAUDE.md](CLAUDE.md) points Claude to the same shared rules. See [engineering/security rules](docs/ENGINEERING-RULES.en.md), [quality metrics and gates](docs/QUALITY-GATES.en.md), and [official attachment findings](docs/RESOURCE-REVIEW.en.md). These are project instructions and documented targets; automated CI enforcement has not yet been added.
 
 The parser is a **pure TypeScript pipeline** (`src/lib`, no React, fully unit-tested). The UI only calls two functions:
 
@@ -116,6 +122,8 @@ Confidence = normaliser confidence × mapping confidence; parsed and inferred va
 
 ## Tested messiness
 
+See the [manual test guide](docs/MANUAL-TEST.en.md) for browser test steps and the [independent verification report](docs/VERIFICATION.en.md) for executed checks, coverage limits and open findings.
+
 `npm run fixtures` generates the files in `tests/fixtures/`; `tests/e2e-parse.test.ts` asserts on all of them:
 
 | Fixture | Mess |
@@ -152,11 +160,13 @@ An uploaded file is untrusted input. A dedicated audit ([`docs/AUDIT.en.md`](doc
 
 ## Known limitations
 
+- **Provisional 20 MiB input limit** (currently labeled “20 MB” in the UI). This is an initial resource guardrail for browser-local parsing, not a benchmark-proven safe maximum or a challenge requirement. Larger files must currently be reduced/split and processed separately; cross-file reconciliation is manual. See [the decision and large-file roadmap](docs/ADR-001-FILE-SIZE-LIMIT.en.md).
+
 - Transposed tables (one asset per column) and key/value “form” layouts are not detected.
 - Header vocabulary covers English and French; other languages rely on content detection (works well for specs and serials, less for user/location columns).
 - Model-family knowledge covers the major business lines (Dell, HP/HPE, Lenovo, Apple, Microsoft, Asus, Acer, Fujitsu, Dynabook, Panasonic, Supermicro…); unknown brands are kept as-is with a lower confidence.
 - Ambiguous dates (`01/02/2023`) are assumed day-first.
-- Parsing runs on the main thread; fine for thousands of rows. Very large files would deserve a Web Worker and a virtualised table. A Web Worker with a timeout would also contain zip bombs, which are bounded after decompression but not during it.
+- Parsing runs on the main thread; responsiveness and peak memory on large files have not been benchmark-validated. A worker with cancellation/timeout and a virtualized table are planned, but neither provides a hard parsing-memory limit. Current row/column limits apply after decoding and do not contain decompression bombs.
 - `.xlsb` and password-protected files are not supported (the latter gets a clear message).
 
 ## Next steps
@@ -184,5 +194,6 @@ docs/                  brief, requirements, plan, security & robustness audit (A
 
 ## How AI was used
 
-- **Claude Code** (Anthropic) was used as a pair programmer throughout: analysing the brief, writing the plan (`docs/PLAN.vi.md`), and generating most of the code, tests and fixtures under my direction. I reviewed the design, ran the app and the tests, and iterated on the heuristics by inspecting real parser output on each fixture (`scripts/inspect.ts`) — several rules (label-like header cells, the row-index column, the `To`/`Assigned To` unit clash, the corrupt-zip vs password message) came from that loop.
+- **Claude Code** (Anthropic) was used as a pair programmer throughout: analysing the brief, writing the original Vietnamese planning draft (the maintained English adaptation is [docs/PLAN.en.md](docs/PLAN.en.md)), and generating most of the code, tests and fixtures under my direction. I reviewed the design, ran the app and the tests, and iterated on the heuristics by inspecting real parser output on each fixture (`scripts/inspect.ts`) — several rules (label-like header cells, the row-index column, the `To`/`Assigned To` unit clash, the corrupt-zip vs password message) came from that loop.
 - **No LLM runs inside the app.** All extraction is deterministic code in this repository.
+- **Codex** assisted with independent source/fixture review, probing the official attachments, and preparing the English plan, agent rules, security criteria and manual test documentation. The verification reports distinguish executed checks from untested browser behavior and record unresolved defects; documentation does not imply those defects have been fixed.

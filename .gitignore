@@ -8,5 +8,9 @@ next-env.d.ts
 
 # Vietnamese working docs stay local; only English docs are published.
 docs/*.vi.md
+**/*.vi.*
 # Personal interview notes (not part of the submission).
 docs/INTERVIEW-PREP.*
+**/INTERVIEW-PREP*
+# Vietnamese candidate brief: local interview context, not submission material.
+resources/Candidate Brief*.pdf

@@ -47,7 +47,7 @@ Build a **web application with TypeScript + Next.js and/or React** where a user 
 Any other useful field (location, assigned user, purchase date, warranty, OS…) is a **bonus**.
 
 > ⚠️ During the presentation they will **test with files you have never seen**. Don't hard-code for the 2 sample files.
-> (Note: the 2 sample spreadsheets mentioned in the note are not in this folder yet. Ask for them / download them.)
+> Official samples are now available in `resources/sample_assets_1.xlsx` and `resources/sample_assets_2.csv`. The accompanying candidate PDF describes role/interview context. See [attachment review](RESOURCE-REVIEW.en.md) for actual parser results and outstanding defects.
 
 ## 4. Optional ideas (pick 1–2 and do them well)
 
