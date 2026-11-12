@@ -1,0 +1,6 @@
+Asset Type,Manufacturer,Model,Serial Number,CPU,RAM,Storage,Screen Size
+Laptop,Dell,Latitude 5420,5CG1234XYZ,Intel Core i7-1185G7,16GB,512GB SSD,14"
+Laptop,HP,EliteBook 840 G8,5CD2345ABC,Intel Core i5-1145G7,8GB,256GB SSD,14"
+Desktop,Lenovo,ThinkCentre M720q,MJ0ABC12,Intel Core i5-8400T,8GB,256GB SSD,
+Server,Dell,PowerEdge R740,7XK9P23,2x Intel Xeon Gold 6230,256GB,4x 1.2TB SAS HDD,
+Laptop,Apple,MacBook Pro 14,C02FK1ABQ6L4,Apple M1 Pro,16GB,512GB SSD,14.2"

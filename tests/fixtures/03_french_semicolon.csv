@@ -1,0 +1,6 @@
+Type de matériel;Marque;Modèle;Numéro de série;Processeur;Mémoire vive;Disque;Écran;Utilisateur;Date d'achat
+Portable;Lenovo;ThinkPad T14 Gen 2;PF2ABCDE;Intel Core i5-1135G7;16 Go;512 Go SSD;14 pouces;Élodie Lefèvre;15/03/2022
+PC fixe;HP;ProDesk 400 G7;CZC1234ABC;Core i3-10100;8 Go;256 Go SSD;;François Dubois;02/11/2021
+Portable;Dell;Latitude 7420;9BCD123;i7-1185G7;32 Go;1 To NVMe;14,0";Hélène Moreau;20/06/2023
+Serveur;HPE;ProLiant DL380 Gen10;CZJ9876XYZ;Xeon Silver 4210R;128 Go;2 x 1,2 To HDD;;;01/09/2020
+Écran;Dell;P2422H;CN0XYZ987;;;;24";Élodie Lefèvre;15/03/2022
