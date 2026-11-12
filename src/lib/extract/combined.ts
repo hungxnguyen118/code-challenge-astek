@@ -48,7 +48,7 @@ export function parseCombined(text: string, knownManufacturer?: string): Combine
   // 1. Storage: numbers attached to a drive type, or anything in TB.
   const storageMatches: string[] = [];
   const storageRe =
-    /(?:\d+\s*[x×]\s*)?\d+(?:[.,]\d+)?\s*(?:tb|to|gb|go|g|t)?\s*(?:sas\s*|sata\s*)?(?:pcie\s*)?(?:nvme\s*)?(?:m\.2\s*)?(?:ssd|hdd|nvme|emmc|sshd|flash)\b|(?:ssd|hdd|nvme)\s*:?\s*\d+(?:[.,]\d+)?\s*(?:tb|to|gb|go)\b|(?:\d+\s*[x×]\s*)?\d+(?:[.,]\d+)?\s*(?:tb|to)\b/gi;
+    /(?<![\d.,])(?:\d{1,3}\s*[x×]\s*)?\d{1,7}(?:[.,]\d{1,4})?\s*(?:tb|to|gb|go|g|t)?\s*(?:sas\s*|sata\s*)?(?:pcie\s*)?(?:nvme\s*)?(?:m\.2\s*)?(?:ssd|hdd|nvme|emmc|sshd|flash)\b|(?:ssd|hdd|nvme)\s*:?\s*\d{1,7}(?:[.,]\d{1,4})?\s*(?:tb|to|gb|go)\b|(?<![\d.,])(?:\d{1,3}\s*[x×]\s*)?\d{1,7}(?:[.,]\d{1,4})?\s*(?:tb|to)\b/gi;
   for (const m of rest.matchAll(storageRe)) storageMatches.push(m[0]);
   if (storageMatches.length > 0) {
     const st = normalizeStorage(storageMatches.join(" + ").replace(/(ssd|hdd|nvme)\s*:?\s*(\d)/gi, "$2 $1"));
@@ -58,13 +58,23 @@ export function parseCombined(text: string, knownManufacturer?: string): Combine
     }
   }
 
-  // 2. RAM: remaining "<n> GB" values. If two remain and no storage yet, the bigger one is storage.
-  const gbRe = /(?<![\d.,])(\d+(?:[.,]\d+)?)\s*(?:gb|go|g|gig|gigs)\b(?:\s*(?:of\s*)?(?:ram|ddr\d\w*|lpddr\d\w*|memory|m[eé]moire|mem))?|(?:ram|memory|m[eé]moire|mem)\s*:?\s*(\d+)\s*(?:gb|go|g)?\b/gi;
+  // 2a. RAM written as modules: "2x8GB", "2 x 8 Go", "8+8GB", "8GB + 8GB" → total.
+  const modules = /(?<![\d.,])(\d{1,2})\s*[x×*]\s*(\d{1,4})\s*(?:gb|go|g)\b|(?<![\d.,])(\d{1,4})\s*(?:gb|go|g)?\s*\+\s*(\d{1,4})\s*(?:gb|go|g)\b/i.exec(rest);
+  if (modules) {
+    const total = modules[1] ? Number(modules[1]) * Number(modules[2]) : Number(modules[3]) + Number(modules[4]);
+    if (total > 0 && total <= 2048) {
+      out.ramGB = { value: total, confidence: 0.85, match: modules[0] };
+      mask(modules[0]);
+    }
+  }
+
+  // 2b. RAM: remaining "<n> GB" values. If two remain and no storage yet, the bigger one is storage.
+  const gbRe = /(?<![\d.,])(\d{1,7}(?:[.,]\d{1,4})?)\s*(?:gb|go|g|gig|gigs)\b(?:\s*(?:of\s*)?(?:ram|ddr\d\w*|lpddr\d\w*|memory|m[eé]moire|mem))?|(?:ram|memory|m[eé]moire|mem)\s*:?\s*(\d{1,7})\s*(?:gb|go|g)?\b/gi;
   const gbs = [...rest.matchAll(gbRe)].map((m) => ({ text: m[0], n: parseLooseNumber(m[1] ?? m[2] ?? "") ?? 0 }));
   if (gbs.length > 0) {
     const sorted = [...gbs].sort((a, b) => a.n - b.n);
-    const ram = gbs.find((g) => /ram|ddr|mem|m[eé]moire/i.test(g.text)) ?? sorted[0]!;
-    if (ram.n > 0 && ram.n <= 2048) {
+    const ram = out.ramGB ? null : (gbs.find((g) => /ram|ddr|mem|m[eé]moire/i.test(g.text)) ?? sorted[0]!);
+    if (ram && ram.n > 0 && ram.n <= 2048) {
       out.ramGB = { value: ram.n, confidence: /ram|ddr|mem/i.test(ram.text) ? 0.9 : 0.75, match: ram.text };
       mask(ram.text);
     }

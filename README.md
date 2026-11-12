@@ -18,7 +18,7 @@ Upload any spreadsheet listing laptops, desktops and servers — whatever its la
 ```bash
 npm install
 npm run dev          # http://localhost:3000
-npm test             # 123 unit + end-to-end tests
+npm test             # 160 unit, end-to-end and robustness tests
 npm run fixtures     # regenerate the messy test spreadsheets
 npx tsx scripts/inspect.ts path/to/file.xlsx   # print what the parser makes of any file
 ```
@@ -99,7 +99,7 @@ Confidence = normaliser confidence × mapping confidence; parsed and inferred va
 | Model | `Lat 5420`, `HP EB 840 G8`, `DL380 Gen10` | `Latitude 5420`, `EliteBook 840 G8`, `ProLiant DL380 Gen10` |
 | Serial | ` s/n: 5cg 1234 xyz ` | `5CG1234XYZ`; `N/A`, `TBD` → missing + warning |
 | Type | `Notebook`, `PC portable`, `PC fixe`, `Serveur`, `VM`, `Écran` | `laptop`, `desktop`, `server`, `virtual-machine`, `monitor` |
-| Dates | Excel dates/serials, `2023-04-01`, `15/04/2023`, `04/15/2023` | ISO; ambiguous `01/02/2023` → day-first, lower confidence |
+| Dates | Excel dates/serials, `2023-04-01`, `15/04/2023`, `04/15/2023`, `5 May 2023`, `1er avril 2023` | ISO, time-zone independent; ambiguous `01/02/2023` → day-first, lower confidence; impossible dates (`31/02`) rejected |
 
 ---
 
@@ -135,13 +135,28 @@ Confidence = normaliser confidence × mapping confidence; parsed and inferred va
 | `13`–`15` | empty workbook, corrupt file, PDF |
 | `16_german_headers.xlsx` | vocabulary the app doesn't know |
 
+## Security & robustness
+
+An uploaded file is untrusted input. A dedicated audit ([`docs/AUDIT.en.md`](docs/AUDIT.en.md)) probed the app with hostile and edge-case files; each finding has a regression test in `tests/unit/robustness.test.ts`.
+
+| Risk | Protection |
+|---|---|
+| **Formula injection** in the exported CSV (`=HYPERLINK(…)` from the source file running in Excel) | Text cells starting with `=` `+` `-` `@` (also after spaces, multi-line or full-width) are prefixed with `'` |
+| **ReDoS**: a long digit run made one regex backtrack for > 15 s | Bounded quantifiers (`\d{1,7}`) + "not inside a number" lookbehind → 80 ms; cells clipped at 2,000 chars |
+| **Size bombs**: formatting a whole column makes Excel declare 1M rows (39 s, 1 GB) | Only the cells that hold values are read (15 ms); limits of 100k rows / 300 columns, always reported to the user |
+| **Time zones**: Excel dates shifted by a day east of UTC | Calendar dates re-anchored to UTC at ingest; tested in 6 zones from UTC−11 to UTC+14 |
+| **Prototype keys**: a sheet or brand named `__proto__` / `constructor` | Own-property lookups and prototype-less counters |
+| **XSS** | No raw-HTML sinks; React escapes everything |
+| **Crashes** | 800 fuzzed workbooks through pipeline, overrides and export: 0 crashes (a seeded subset runs in CI) |
+| **Dependencies** | `npm audit --omit=dev`: 0 vulnerabilities; SheetJS from its official CDN (the npm build has known CVEs) |
+
 ## Known limitations
 
 - Transposed tables (one asset per column) and key/value “form” layouts are not detected.
 - Header vocabulary covers English and French; other languages rely on content detection (works well for specs and serials, less for user/location columns).
 - Model-family knowledge covers the major business lines (Dell, HP/HPE, Lenovo, Apple, Microsoft, Asus, Acer, Fujitsu, Dynabook, Panasonic, Supermicro…); unknown brands are kept as-is with a lower confidence.
 - Ambiguous dates (`01/02/2023`) are assumed day-first.
-- Parsing runs on the main thread; fine for thousands of rows. Very large files would deserve a Web Worker and a virtualised table.
+- Parsing runs on the main thread; fine for thousands of rows. Very large files would deserve a Web Worker and a virtualised table. A Web Worker with a timeout would also contain zip bombs, which are bounded after decompression but not during it.
 - `.xlsb` and password-protected files are not supported (the latter gets a clear message).
 
 ## Next steps
@@ -163,8 +178,8 @@ src/
     knowledge/         vocabulary, manufacturers, product families (data only)
     export.ts          CSV / JSON export
 scripts/               fixture generator, inspect CLI
-tests/                 unit tests per normaliser, combined parser, end-to-end on every fixture
-docs/                  brief, requirements, plan
+tests/                 unit tests per normaliser, combined parser, end-to-end on every fixture, robustness/security
+docs/                  brief, requirements, plan, security & robustness audit (AUDIT.en.md)
 ```
 
 ## How AI was used

@@ -3,6 +3,7 @@ import { CORE_FIELDS } from "../types";
 import { isPlaceholderSerial } from "../extract/serial";
 import { MEMORY_SPEEDS_MHZ } from "../extract/ram";
 import { ASSET_TYPE_LABELS } from "../extract/assetType";
+import { countBy } from "../text";
 
 export const LOW_CONFIDENCE = 0.5;
 
@@ -76,14 +77,9 @@ export function findDuplicates(assets: Asset[]): DuplicateGroup[] {
 
 export function summarize(assets: Asset[], duplicates: DuplicateGroup[]): FleetSummary {
   const computers = assets.filter((a) => a.kind === "computer");
-  const byType: Record<string, number> = {};
-  const byManufacturer: Record<string, number> = {};
-  for (const a of computers) {
-    const t = a.fields.assetType?.value ?? "unknown";
-    byType[t] = (byType[t] ?? 0) + 1;
-    const m = a.fields.manufacturer?.value ?? "Unknown";
-    byManufacturer[m] = (byManufacturer[m] ?? 0) + 1;
-  }
+  // countBy uses a prototype-less object: a brand literally called "constructor" or "__proto__" must count like any other.
+  const byType = countBy(computers.map((a) => a.fields.assetType?.value ?? "unknown"));
+  const byManufacturer = countBy(computers.map((a) => a.fields.manufacturer?.value ?? "Unknown"));
   const completeness = Object.fromEntries(
     CORE_FIELDS.map((k) => [k, computers.length ? computers.filter((a) => a.fields[k] !== undefined).length / computers.length : 0]),
   ) as Record<CoreField, number>;

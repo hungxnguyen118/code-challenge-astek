@@ -5,6 +5,7 @@ import type { ColumnMapping, DetectedTable, MappingTarget, Overrides } from "@/l
 import { ALL_FIELDS } from "@/lib/types";
 import { fieldLabel } from "@/lib/extract/registry";
 import { confidenceLevel, pct } from "@/lib/format";
+import { ownValue } from "@/lib/text";
 
 const TARGETS: MappingTarget[] = [...ALL_FIELDS, "combined"];
 
@@ -20,7 +21,7 @@ interface Props {
  * whole (pure) pipeline re-runs, so the table below updates instantly.
  */
 export function MappingEditor({ table, mapping, overrides, onOverrides }: Props) {
-  const current = overrides.tables?.[table.id] ?? {};
+  const current = ownValue(overrides.tables, table.id) ?? {};
   const [headerInput, setHeaderInput] = useState(String(table.headerRow ?? ""));
 
   const update = (next: typeof current) => onOverrides({ ...overrides, tables: { ...overrides.tables, [table.id]: next } });

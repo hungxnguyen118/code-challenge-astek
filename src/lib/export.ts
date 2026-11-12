@@ -48,8 +48,20 @@ export function toCsv(result: ParseResult, opts: ExportOptions): string {
     };
   });
   // BOM so Excel opens UTF-8 (accents!) correctly.
-  return "﻿" + Papa.unparse(rows);
+  return "﻿" + Papa.unparse(rows, { escapeFormulae: FORMULA_TRIGGER });
 }
+
+/**
+ * CSV / formula injection guard (OWASP). The input file was written by someone else; a cell like
+ * `=HYPERLINK("http://evil","Click")` or `+cmd|'/C calc'!A0` would run as a formula when *our*
+ * export is opened in Excel. Text cells matching this get a leading `'`, which Excel/LibreOffice
+ * treat as "this is text". Papa never applies it to real numbers, so `ram_gb` stays numeric.
+ *
+ * Wider than Papa's built-in `escapeFormulae: true` (`/^[=+\-@\t\r].*$/`), which misses a leading
+ * space (" =1+1", which Excel still evaluates), multi-line cells (`.` doesn't match "\n"), and
+ * full-width ＝＋－＠.
+ */
+export const FORMULA_TRIGGER = /^[\s 　]*[=+\-@＝＋－＠]|^[\t\r\n]/;
 
 /** Full-fidelity JSON: every value with its raw text, method, confidence and source column. */
 export function toJson(result: ParseResult, opts: ExportOptions): string {

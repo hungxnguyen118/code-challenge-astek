@@ -46,18 +46,49 @@ export function normalizeDate(raw: unknown): Normalized<string> | null {
     return ymd(y, b, a, 0.6); // ambiguous → assume day-first
   }
 
-  const parsed = Date.parse(s);
-  if (!Number.isNaN(parsed)) {
-    const iso = toIsoDate(new Date(parsed));
-    if (iso) return { value: iso, confidence: 0.7 };
-  }
+  // Month names ("5 May 2023", "May 5, 2023", "avril 2023"). Parsed by hand on purpose: Date.parse
+  // is engine-specific, uses the local time zone, and accepts nonsense ("Latitude 5420" → year 5419).
+  const named = parseNamedMonth(s);
+  if (named) return named;
+
   m = /^(\d{4})$/.exec(s);
   if (m) return ymd(+m[1]!, 1, 1, 0.4);
   return null;
 }
 
+const MONTHS: Record<string, number> = {
+  jan: 1, january: 1, janvier: 1, janv: 1,
+  feb: 2, february: 2, fev: 2, fevr: 2, fevrier: 2,
+  mar: 3, march: 3, mars: 3,
+  apr: 4, april: 4, avr: 4, avril: 4,
+  may: 5, mai: 5,
+  jun: 6, june: 6, juin: 6,
+  jul: 7, july: 7, juil: 7, juillet: 7,
+  aug: 8, august: 8, aout: 8,
+  sep: 9, sept: 9, september: 9, septembre: 9,
+  oct: 10, october: 10, octobre: 10,
+  nov: 11, november: 11, novembre: 11,
+  dec: 12, december: 12, decembre: 12,
+};
+
+function parseNamedMonth(s: string): Normalized<string> | null {
+  const t = s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[.,]/g, " ").replace(/\s+/g, " ").trim();
+  if (t.length > 40) return null;
+  const month = (w: string) => (Object.prototype.hasOwnProperty.call(MONTHS, w) ? MONTHS[w]! : null);
+  let m = /^(\d{1,2})(?:er|st|nd|rd|th)? ([a-z]+) (\d{4})$/.exec(t); // 5 May 2023 · 1er avril 2023
+  if (m && month(m[2]!)) return ymd(+m[3]!, month(m[2]!)!, +m[1]!, 0.85);
+  m = /^([a-z]+) (\d{1,2})(?:st|nd|rd|th)? (\d{4})$/.exec(t); // May 5 2023
+  if (m && month(m[1]!)) return ymd(+m[3]!, month(m[1]!)!, +m[2]!, 0.85);
+  m = /^([a-z]+) (\d{4})$/.exec(t); // April 2023 → first of the month, lower confidence
+  if (m && month(m[1]!)) return ymd(+m[2]!, month(m[1]!)!, 1, 0.6);
+  return null;
+}
+
+/** Builds an ISO date, rejecting dates that don't exist (31/02, 30/02/2023, 29/02 outside leap years). */
 function ymd(y: number, mo: number, d: number, confidence: number): Normalized<string> | null {
-  if (y < 1980 || y > 2100 || mo < 1 || mo > 12 || d < 1 || d > 31) return null;
+  if (y < 1980 || y > 2100 || mo < 1 || mo > 12 || d < 1) return null;
+  const daysInMonth = new Date(Date.UTC(y, mo, 0)).getUTCDate();
+  if (d > daysInMonth) return null;
   return { value: `${y}-${String(mo).padStart(2, "0")}-${String(d).padStart(2, "0")}`, confidence };
 }
 

@@ -128,3 +128,19 @@ export function round(n: number, digits = 1): number {
 export function escapeRegExp(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
+
+/**
+ * Read `record[key]` only if it is the record's *own* property. Keys that come from the file
+ * (sheet names, brands) can be "constructor" or "__proto__", and a plain `{}` would answer with
+ * Object.prototype's members instead of `undefined`.
+ */
+export function ownValue<T>(record: Record<string, T> | undefined, key: string): T | undefined {
+  return record && Object.prototype.hasOwnProperty.call(record, key) ? record[key] : undefined;
+}
+
+/** Count occurrences into a prototype-less object, safe for any key. */
+export function countBy(keys: Iterable<string>): Record<string, number> {
+  const out = Object.create(null) as Record<string, number>;
+  for (const k of keys) out[k] = (out[k] ?? 0) + 1;
+  return out;
+}

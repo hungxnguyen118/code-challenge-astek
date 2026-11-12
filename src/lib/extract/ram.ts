@@ -8,7 +8,9 @@ export const MEMORY_SPEEDS_MHZ = new Set([800, 1066, 1333, 1600, 1866, 2133, 240
 const GB = "(?:gb|gib|go|g|gig|gigs|giga|gigabytes?|gbytes?)";
 const MB = "(?:mb|mib|mo|megabytes?)";
 const TB = "(?:tb|tib|to|terabytes?)";
-const NUM = "(\\d+(?:[.,]\\d+)?)";
+// Bounded digit runs + "not inside a number" lookbehind keep matching linear even on a
+// 2 000-digit cell; `\d+` here took seconds (catastrophic backtracking, see docs/AUDIT).
+const NUM = "(?<![\\d.,])(\\d{1,7}(?:[.,]\\d{1,4})?)";
 
 /**
  * Normalise a RAM value to a number of GB.
@@ -28,7 +30,7 @@ export function normalizeRam(raw: unknown, hint?: UnitHint): Normalized<number> 
   if (/\b(ssd|hdd|nvme|emmc|disk|disque|sata|m\.2)\b/.test(s)) return null;
 
   // "2x8GB", "2 x 8 GB", "4*16GB"
-  const multi = new RegExp(`(\\d+)\\s*[x×*]\\s*${NUM}\\s*${GB}\\b`).exec(s);
+  const multi = new RegExp(`(?<![\\d.,])(\\d{1,3})\\s*[x×*]\\s*${NUM}\\s*${GB}\\b`).exec(s);
   if (multi) return result(Number(multi[1]) * (parseLooseNumber(multi[2]!) ?? 0), 0.95);
 
   // "8+8 GB", "8GB + 8GB"

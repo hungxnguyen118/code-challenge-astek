@@ -2,7 +2,8 @@ import type { Drive, DriveType, Normalized, StorageValue } from "../types";
 import { parseLooseNumber } from "../text";
 import type { UnitHint } from "./unitHint";
 
-const SIZE_RE = /(?:(\d+)\s*[x×*]\s*)?(\d+(?:[.,]\d+)?)\s*(tb|tib|to|t|gb|gib|go|g|mb|mo)?\b/i;
+// Bounded digit runs (no size needs more than 7 digits) keep this linear on hostile input — see docs/AUDIT.
+const SIZE_RE = /(?<![\d.,])(?:(\d{1,3})\s*[x×*]\s*)?(\d{1,7}(?:[.,]\d{1,4})?)\s*(tb|tib|to|t|gb|gib|go|g|mb|mo)?\b/i;
 
 function driveType(s: string): DriveType | null {
   if (/nvme|pcie|m\.?2/i.test(s)) return "NVMe";

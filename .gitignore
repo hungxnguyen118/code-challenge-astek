@@ -5,3 +5,8 @@ out/
 next-env.d.ts
 .env*.local
 .DS_Store
+
+# Vietnamese working docs stay local; only English docs are published.
+docs/*.vi.md
+# Personal interview notes (not part of the submission).
+docs/INTERVIEW-PREP.*

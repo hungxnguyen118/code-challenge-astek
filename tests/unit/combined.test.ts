@@ -72,4 +72,9 @@ describe("parseCombined", () => {
   it("spots peripherals", () => {
     expect(flat("Dell P2422H 24\" monitor").type).toBe("monitor");
   });
+
+  // Audit F7: RAM written as modules used to keep only one module (8 instead of 16).
+  it.each(["HP 840 G8 2x8GB 256GB SSD", "HP 840 G8 2 x 8 Go 256GB SSD", "Dell 7420 8+8GB 512 SSD", "Dell 7420 8GB + 8GB 512GB SSD"])("adds up RAM modules: %s", (text) => {
+    expect(flat(text).ram).toBe(16);
+  });
 });

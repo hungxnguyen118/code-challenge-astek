@@ -1,6 +1,6 @@
 import type { Asset, ExtractedValue, FieldKey, FieldValueMap, Overrides, ParseResult, RawSheet, RawWorkbook, SheetResult, TableResult } from "../types";
 import { CORE_FIELDS } from "../types";
-import { cellToString, isBlank } from "../text";
+import { cellToString, isBlank, ownValue } from "../text";
 import { normalizeField } from "../extract/registry";
 import { detectTables } from "./tableDetector";
 import { mapColumns } from "./columnMapper";
@@ -79,14 +79,14 @@ function analyzeSheet(sheet: RawSheet, index: number, overrides: Overrides, sign
   signatures.push({ name: sheet.name, rows: sig });
 
   const tables: TableResult[] = detectTables(sheet, index, overrides.tables).map((table) => {
-    const mapping = mapColumns(table, overrides.tables?.[table.id]);
+    const mapping = mapColumns(table, ownValue(overrides.tables, table.id));
     const assets = table.rows.map((row) => {
       const asset = extractRow(table, mapping, row);
-      applyCellEdits(asset, overrides.cellEdits?.[asset.id]);
+      applyCellEdits(asset, ownValue(overrides.cellEdits, asset.id));
       const { kind, reason } = classifyRow(asset, row, table);
       asset.kind = kind;
       asset.kindReason = reason;
-      const forced = overrides.rowKinds?.[asset.id];
+      const forced = ownValue(overrides.rowKinds, asset.id);
       if (forced && forced !== kind) {
         asset.kind = forced;
         asset.kindReason = "moved by you";
@@ -98,7 +98,7 @@ function analyzeSheet(sheet: RawSheet, index: number, overrides: Overrides, sign
 
   const hasAssets = tables.some((t) => t.assets.some((a) => a.kind !== "skipped"));
   const mappedCore = tables.some((t) => t.mapping.some((m) => m.target && (CORE_FIELDS as readonly string[]).includes(m.target)));
-  const userChoice = overrides.sheetInclusion?.[sheet.name];
+  const userChoice = ownValue(overrides.sheetInclusion, sheet.name);
 
   if (dupOf) {
     const exact = overlap(sig, dupOf.rows) === 1 && sig.size === dupOf.rows.size;

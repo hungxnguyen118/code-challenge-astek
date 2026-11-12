@@ -5,6 +5,7 @@ import type { Asset, ExtractedValue, FieldKey, FieldValueMap, MappingTarget, Ove
 import { ALL_FIELDS } from "@/lib/types";
 import { formatValue, pct } from "@/lib/format";
 import { provenance } from "./AssetTable";
+import { ownValue } from "@/lib/text";
 
 interface Props {
   asset: Asset;
@@ -17,7 +18,7 @@ interface Props {
 
 /** Row details: every value with its provenance, inline editing, and the original row side by side. */
 export function AssetDrawer({ asset, overrides, onOverrides, onClose, fieldLabel }: Props) {
-  const edits = overrides.cellEdits?.[asset.id] ?? {};
+  const edits = ownValue(overrides.cellEdits, asset.id) ?? {};
   const [draft, setDraft] = useState<Partial<Record<FieldKey, string>>>({});
 
   useEffect(() => {
