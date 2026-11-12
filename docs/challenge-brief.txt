@@ -1,0 +1,67 @@
+Please ask the candidates to share a link to their Git repository (GitHub, GitLab, or similar) by 12 PM this Friday, 13 November.
+During the interview, candidates will also be asked to demo their app and walk through their technical decisions.
+Please find below the instructions for the coding challenge, along with two sample spreadsheets to help you get started.
+
+CODING CHALLENGE
+
+The backstory
+
+Somewhere out there, an IT manager is opening a spreadsheet called "assets_FINAL_v3_USE_THIS_ONE.xlsx". It lists every laptop, desktop and server in the company. The headers start on row 4, "RAM" is spelled three different ways, someone typed "Dell Lat 5420 i7 16GB" into a single cell, and there's a second tab called "Sheet1 (2)" that nobody dares delete.
+
+At our company, we see spreadsheets like this every day, and no two look the same. Your mission is to build an app that makes sense of them anyway.
+
+The challenge
+
+Build a web application using TypeScript and Next.js and/or React that lets a user:
+
+1. Upload a spreadsheet (.xlsx and .csv at minimum) listing computer assets: laptops, desktops, servers, and whatever else turns up.
+2. Automatically extract the key information for each asset, whatever the layout of the file.
+3. Review the results in a clean, structured view.
+
+The catch: there is no predefined format. Column names, column order, header position, number of sheets and how data is written will all vary from file to file. Your app needs to cope.
+
+What to extract
+
+For each asset, extract the following whenever the information is available in the file:
+
+- Asset type (laptop, desktop, server…)
+- Manufacturer
+- Model
+- Serial number
+- CPU
+- RAM
+- Storage
+- Screen size
+
+Anything else useful you can pull out is a bonus.
+
+Two sample files are attached to get you started. Be warned: during your presentation we'll test your app with files you haven't seen.
+
+Where you can get creative
+
+This is your stage. A few ideas, none of them required:
+
+- Smart column detection (fuzzy matching, heuristics, an LLM, or a mix)
+- Confidence scores, so users know which values to double-check
+- A "fix the mapping" screen for when the app guesses wrong
+- Parsing combined fields like "HP EliteBook 840 G8 / i5 / 16GB / 256GB SSD / 14in"
+- Normalising messy values ("16 gig", "16GB", "16384 MB" → 16 GB)
+- Spotting rows that aren't computers at all (monitors, keyboards…)
+- Duplicate detection, data quality warnings, or a fleet summary dashboard
+- Export to clean CSV/JSON
+
+Surprise us. One idea done thoughtfully beats ten done halfway.
+
+Good to know
+
+- Time: We suggest around [2–3] hours in total. We care more about how you think than how many hours you put in.
+- AI tools: You're welcome to use AI coding assistants, or an LLM inside the app itself. Just explain in your README where and how you used them, and be ready to talk through any code in your repo.
+
+What we'll look at
+
+- How well your app handles formats it has never seen
+- Code quality, structure and TypeScript usage
+- User experience, especially when things go wrong
+- How clearly you explain your reasoning, in the README and in the presentation
+
+Have fun with it. We're looking forward to seeing what you build!
